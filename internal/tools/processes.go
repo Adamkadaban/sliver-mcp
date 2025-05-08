@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/adamkadaban/sliver-mcp/internal/client"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -106,6 +107,17 @@ func HandleExecute(ctx context.Context, request mcp.CallToolRequest, client *cli
 		return nil, NewInvalidArgsError("command must be a string")
 	}
 
+	// Get session info to determine target OS
+	session, err := client.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session info: %v", err)
+	}
+
+	isWindows := false
+	if session.OS != "" && strings.ToLower(session.OS) == "windows" {
+		isWindows = true
+	}
+
 	execute, err := client.Execute(ctx, sessionID, command)
 	if err != nil {
 		return nil, err
@@ -119,10 +131,38 @@ func HandleExecute(ctx context.Context, request mcp.CallToolRequest, client *cli
 		if len(output) == 0 {
 			output = execute.GetStderr()
 		}
+
 		if len(output) == 0 {
-			responseText = "Command executed successfully (no output)"
+			if isWindows {
+				responseText = "Command executed successfully on Windows (no output). Note that some Windows commands may not produce output when run through cmd.exe or PowerShell."
+			} else {
+				responseText = "Command executed successfully (no output)"
+			}
 		} else {
-			responseText = fmt.Sprintf("Output:\n%s", string(output))
+			if isWindows {
+				// Process the output more carefully for Windows
+				outputStr := string(output)
+
+				// Step 1: Always remove null bytes as they truncate strings in Go
+				outputStr = strings.ReplaceAll(outputStr, "\x00", "")
+
+				// Step 2: Handle line endings properly
+				// First replace CRLF with a temporary marker
+				outputStr = strings.ReplaceAll(outputStr, "\r\n", "##CRLF##")
+
+				// Then replace any standalone CR with LF
+				outputStr = strings.ReplaceAll(outputStr, "\r", "\n")
+
+				// Finally restore CRLF markers to LF
+				outputStr = strings.ReplaceAll(outputStr, "##CRLF##", "\n")
+
+				// Step 3: Ensure output is trimmed properly but preserves valid newlines
+				outputStr = strings.TrimSpace(outputStr)
+
+				responseText = fmt.Sprintf("Output from Windows command:\n%s", outputStr)
+			} else {
+				responseText = fmt.Sprintf("Output:\n%s", string(output))
+			}
 		}
 	}
 

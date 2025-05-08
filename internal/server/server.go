@@ -10,7 +10,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-func NewSliverMCPServer(configPath string) *server.MCPServer {
+func NewSliverMCPServer(configPath string, outputDir string) *server.MCPServer {
 	hooks := &server.Hooks{}
 
 	// Setup hooks for logging and debugging
@@ -38,6 +38,9 @@ func NewSliverMCPServer(configPath string) *server.MCPServer {
 	if err != nil {
 		log.Fatalf("Failed to initialize Sliver client: %v", err)
 	}
+
+	// Set the output directory for implants
+	tools.ImplantConfig.OutputDir = outputDir
 
 	// Register session management tools
 	registerSessionTools(mcpServer, sliverClient)
@@ -67,6 +70,12 @@ func registerImplantTools(mcpServer *server.MCPServer, sliverClient *client.Sliv
 		),
 		mcp.WithString("name",
 			mcp.Description("The name for the implant"),
+		),
+		mcp.WithBoolean("includeBinary",
+			mcp.Description("Whether to include binary data in the response. Default is false to prevent LLM context overflow."),
+		),
+		mcp.WithString("outputDir",
+			mcp.Description("Optional custom output directory for this specific implant. If not specified, the global output directory is used."),
 		),
 	), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return tools.HandleGenerateImplant(ctx, request, sliverClient)
@@ -118,6 +127,12 @@ func registerImplantTools(mcpServer *server.MCPServer, sliverClient *client.Sliv
 		mcp.WithString("implantName",
 			mcp.Description("The name of the implant to regenerate"),
 			mcp.Required(),
+		),
+		mcp.WithBoolean("includeBinary",
+			mcp.Description("Whether to include binary data in the response. Default is false to prevent LLM context overflow."),
+		),
+		mcp.WithString("outputDir",
+			mcp.Description("Optional custom output directory for this specific implant. If not specified, the global output directory is used."),
 		),
 	), func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return tools.HandleRegenerateImplant(ctx, request, sliverClient)
