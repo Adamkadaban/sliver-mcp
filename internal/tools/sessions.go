@@ -80,6 +80,78 @@ func HandleKillSession(ctx context.Context, request mcp.CallToolRequest, client 
 	}, nil
 }
 
+func HandleGetSession(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
+	arguments := request.Params.Arguments
+
+	sessionID, ok := arguments["sessionID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("sessionID must be a string")
+	}
+
+	session, err := client.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	lastCheckin := time.Unix(0, session.LastCheckin).Format(time.RFC3339)
+
+	formattedSession := map[string]interface{}{
+		"id":            session.ID,
+		"name":          session.Name,
+		"hostname":      session.Hostname,
+		"os":            session.OS,
+		"arch":          session.Arch,
+		"username":      session.Username,
+		"pid":           session.PID,
+		"transport":     session.Transport,
+		"remoteAddress": session.RemoteAddress,
+		"lastCheckin":   lastCheckin,
+		"isDead":        session.IsDead,
+	}
+
+	result, err := json.Marshal(formattedSession)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.TextContent{
+				Type: "text",
+				Text: string(result),
+			},
+		},
+	}, nil
+}
+
+func HandleRenameSession(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
+	arguments := request.Params.Arguments
+
+	sessionID, ok := arguments["sessionID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("sessionID must be a string")
+	}
+
+	name, ok := arguments["name"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("name must be a string")
+	}
+
+	err := client.RenameSession(ctx, sessionID, name)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.TextContent{
+				Type: "text",
+				Text: fmt.Sprintf("Session %s successfully renamed to %s", sessionID, name),
+			},
+		},
+	}, nil
+}
+
 func HandleListBeacons(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	beacons, err := client.GetBeacons(ctx)
 	if err != nil {
@@ -247,7 +319,6 @@ func HandleGetBeaconTasks(ctx context.Context, request mcp.CallToolRequest, clie
 	}, nil
 }
 
-// Not working in client yet
 func HandleCancelBeaconTask(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	arguments := request.Params.Arguments
 
@@ -261,17 +332,23 @@ func HandleCancelBeaconTask(ctx context.Context, request mcp.CallToolRequest, cl
 		return nil, NewInvalidArgsError("taskID must be a string")
 	}
 
-	// Not calling client.CancelBeaconTask due to implementation issues
-	// cancelledTask, err := client.CancelBeaconTask(ctx, beaconID, taskID)
-	// if err != nil {
-	//	return nil, err
-	// }
+	// NOTE: CancelBeaconTask is not implemented in the client due to protobuf compatibility issues
+	// with sliver version v1.15.16. Will need to update sliver version or adapt to available API.
+
+	result, err := json.Marshal(map[string]interface{}{
+		"id":       taskID,
+		"beaconID": beaconID,
+		"status":   "Not implemented due to compatibility issues with sliver v1.15.16",
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			mcp.TextContent{
 				Type: "text",
-				Text: fmt.Sprintf("Cancel beacon task not yet fully implemented. Would cancel task %s for beacon %s", taskID, beaconID),
+				Text: string(result),
 			},
 		},
 	}, nil

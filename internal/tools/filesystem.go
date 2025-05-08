@@ -307,3 +307,91 @@ func HandleRm(ctx context.Context, request mcp.CallToolRequest, client *client.S
 		},
 	}, nil
 }
+
+// HandleMv handles the mv tool request
+func HandleMv(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
+	arguments := request.Params.Arguments
+
+	// Extract and validate arguments
+	sessionID, ok := arguments["sessionID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("sessionID must be a string")
+	}
+
+	srcPath, ok := arguments["srcPath"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("srcPath must be a string")
+	}
+
+	dstPath, ok := arguments["dstPath"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("dstPath must be a string")
+	}
+
+	// Call the client's Mv method
+	mv, err := client.Mv(ctx, sessionID, srcPath, dstPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the result as JSON
+	result, err := json.Marshal(map[string]interface{}{
+		"src": mv.Src,
+		"dst": mv.Dst,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.TextContent{
+				Type: "text",
+				Text: string(result),
+			},
+		},
+	}, nil
+}
+
+// HandleCp handles the cp tool request
+func HandleCp(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
+	arguments := request.Params.Arguments
+
+	// Extract and validate arguments
+	_, ok := arguments["sessionID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("sessionID must be a string")
+	}
+
+	srcPath, ok := arguments["srcPath"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("srcPath must be a string")
+	}
+
+	dstPath, ok := arguments["dstPath"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("dstPath must be a string")
+	}
+
+	// NOTE: Cp is not implemented in the client due to protobuf compatibility issues
+	// with sliver version v1.5.x. Will need to update sliver version or adapt to available API.
+
+	// Return a placeholder result with status message
+	result, err := json.Marshal(map[string]interface{}{
+		"src":    srcPath,
+		"dst":    dstPath,
+		"status": "Copy operation not implemented due to compatibility issues with sliver v1.5.x",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.TextContent{
+				Type: "text",
+				Text: string(result),
+			},
+		},
+	}, nil
+}

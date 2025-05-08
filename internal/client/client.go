@@ -279,24 +279,9 @@ func (c *SliverClient) DeleteImplantBuild(ctx context.Context, buildID string) (
 	return empty, nil
 }
 
-// Having protobuf compatibility issues atm
-
-/*
-func (c *SliverClient) GenerateStage(ctx context.Context, reqData *clientpb.GenerateStageReq) (*clientpb.Generate, error) {
-	if ctx == nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
-		defer cancel()
-	}
-
-	generate, err := c.RPCClient.GenerateStage(ctx, reqData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate stager: %v", err)
-	}
-
-	return generate, nil
-}
-*/
+// TODO: GenerateStage needs to be implemented
+// Protobuf definitions/implementation not found in sliver version v1.5.x
+// Will need to update sliver version or adapt to available API
 
 func (c *SliverClient) RmBeacon(ctx context.Context, beaconID string) (*commonpb.Empty, error) {
 	if ctx == nil {
@@ -332,28 +317,9 @@ func (c *SliverClient) GetBeaconTasks(ctx context.Context, beaconID string) (*cl
 	return tasks, nil
 }
 
-// protobuf compatibility issues
-/*
-func (c *SliverClient) CancelBeaconTask(ctx context.Context, beaconID, taskID string) (*clientpb.BeaconTask, error) {
-	if ctx == nil {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-	}
-
-	beaconTask := &clientpb.BeaconTask{
-		BeaconID: beaconID,
-		ID:       taskID,
-	}
-
-	cancelledTask, err := c.RPCClient.CancelBeaconTask(ctx, beaconTask)
-	if err != nil {
-		return nil, fmt.Errorf("failed to cancel beacon task: %v", err)
-	}
-
-	return cancelledTask, nil
-}
-*/
+// TODO: CancelBeaconTask needs to be implemented
+// Protobuf definitions/implementation not found in sliver version v1.5.x
+// Will need to update sliver version or adapt to available API
 
 func (c *SliverClient) StartMTLSListener(ctx context.Context, host string, port uint32) (interface{}, error) {
 	if ctx == nil {
@@ -510,6 +476,27 @@ func (c *SliverClient) Ps(ctx context.Context, sessionID string) (*sliverpb.Ps, 
 	return ps, nil
 }
 
+func (c *SliverClient) Terminate(ctx context.Context, sessionID string, pid int32, force bool) (*sliverpb.Terminate, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+	}
+
+	terminate, err := c.RPCClient.Terminate(ctx, &sliverpb.TerminateReq{
+		Request: &commonpb.Request{
+			SessionID: sessionID,
+		},
+		Pid:   pid,
+		Force: force,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to terminate process: %v", err)
+	}
+
+	return terminate, nil
+}
+
 func (c *SliverClient) Execute(ctx context.Context, sessionID, command string) (*sliverpb.Execute, error) {
 	if ctx == nil {
 		var cancel context.CancelFunc
@@ -517,14 +504,33 @@ func (c *SliverClient) Execute(ctx context.Context, sessionID, command string) (
 		defer cancel()
 	}
 
+	// Use absolute paths for the shells to avoid any path resolution issues
+	const bash = "/bin/bash"
+	const sh = "/bin/sh"
+	
+	// Try to execute with bash first (most common shell with most features)
 	execute, err := c.RPCClient.Execute(ctx, &sliverpb.ExecuteReq{
 		Request: &commonpb.Request{
 			SessionID: sessionID,
 		},
-		Path: command,
+		Path:   bash,
+		Args:   []string{"-c", command},
+		Output: true,
 	})
+
+	// If bash fails, try sh as a fallback
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute command: %v", err)
+		execute, err = c.RPCClient.Execute(ctx, &sliverpb.ExecuteReq{
+			Request: &commonpb.Request{
+				SessionID: sessionID,
+			},
+			Path:   sh,
+			Args:   []string{"-c", command},
+			Output: true,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute command with both bash and sh: %v", err)
+		}
 	}
 
 	return execute, nil
@@ -632,3 +638,67 @@ func (c *SliverClient) Kill(ctx context.Context, sessionID string, force bool) e
 
 	return nil
 }
+
+func (c *SliverClient) GetSession(ctx context.Context, sessionID string) (*clientpb.Session, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	sessions, err := c.RPCClient.GetSessions(ctx, &commonpb.Empty{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sessions: %v", err)
+	}
+
+	for _, session := range sessions.Sessions {
+		if session.ID == sessionID {
+			return session, nil
+		}
+	}
+
+	return nil, fmt.Errorf("session with ID %s not found", sessionID)
+}
+
+func (c *SliverClient) RenameSession(ctx context.Context, sessionID, newName string) error {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	_, err := c.RPCClient.Rename(ctx, &clientpb.RenameReq{
+		SessionID: sessionID,
+		Name:      newName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to rename session: %v", err)
+	}
+
+	return nil
+}
+
+func (c *SliverClient) Mv(ctx context.Context, sessionID, srcPath, dstPath string) (*sliverpb.Mv, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+	}
+
+	mv, err := c.RPCClient.Mv(ctx, &sliverpb.MvReq{
+		Request: &commonpb.Request{
+			SessionID: sessionID,
+		},
+		Src: srcPath,
+		Dst: dstPath,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to move file: %v", err)
+	}
+
+	return mv, nil
+}
+
+// TODO: Cp needs to be implemented
+// Protobuf definitions/implementation not found in sliver version v1.5.x
+// Will need to update sliver version or adapt to available API

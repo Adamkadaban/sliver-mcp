@@ -366,7 +366,7 @@ func HandleRegenerateImplant(ctx context.Context, request mcp.CallToolRequest, c
 	}, nil
 }
 
-// Not working on client
+// Handle the generateStage tool, but with compatibility note
 func HandleGenerateStager(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	arguments := request.Params.Arguments
 
@@ -380,37 +380,25 @@ func HandleGenerateStager(ctx context.Context, request mcp.CallToolRequest, clie
 		name = nameArg
 	}
 
-	params := map[string]interface{}{
-		"profile": profile,
-		"name":    name,
-	}
+	// NOTE: GenerateStage is not implemented in the client due to protobuf compatibility issues
+	// with sliver version v1.15.16. Will need to update sliver version or adapt to available API.
 
-	if aesKey, ok := arguments["aesEncryptKey"].(string); ok {
-		params["aesEncryptKey"] = aesKey
-	}
-	if aesIv, ok := arguments["aesEncryptIv"].(string); ok {
-		params["aesEncryptIv"] = aesIv
-	}
-	if rc4Key, ok := arguments["rc4EncryptKey"].(string); ok {
-		params["rc4EncryptKey"] = rc4Key
-	}
-	if compress, ok := arguments["compress"].(string); ok {
-		params["compress"] = compress
-	}
-	if compressF, ok := arguments["compressF"].(string); ok {
-		params["compressF"] = compressF
-	}
-	if prependSize, ok := arguments["prependSize"].(bool); ok {
-		params["prependSize"] = prependSize
-	}
-
-	paramJSON, _ := json.Marshal(params)
+	paramJSON, _ := json.Marshal(map[string]interface{}{
+		"profile":       profile,
+		"name":          name,
+		"aesEncryptKey": arguments["aesEncryptKey"],
+		"aesEncryptIv":  arguments["aesEncryptIv"],
+		"rc4EncryptKey": arguments["rc4EncryptKey"],
+		"compress":      arguments["compress"],
+		"compressF":     arguments["compressF"],
+		"prependSize":   arguments["prependSize"],
+	})
 
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			mcp.TextContent{
 				Type: "text",
-				Text: fmt.Sprintf("Stager generation not yet implemented. Would generate a stager with parameters: %s", string(paramJSON)),
+				Text: fmt.Sprintf("Stager generation not implemented due to compatibility issues with sliver v1.15.16. Would generate a stager with parameters: %s", string(paramJSON)),
 			},
 		},
 	}, nil
