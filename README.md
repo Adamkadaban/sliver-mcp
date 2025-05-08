@@ -2,6 +2,8 @@
 
 A Model-Code-Plugin (MCP) for interacting with the [Sliver](https://github.com/bishopfox/sliver) C2 framework. This MCP allows Large Language Models to interact with Sliver's functionality through well-defined tools.
 
+The MCP implementation used for this project is [mark3labs/mcp-go](https://github.com/mark3labs/mcp-go)
+
 ## Features
 
 - Session management (list, interact, kill)
