@@ -214,7 +214,7 @@ func HandleGetBeaconTasks(ctx context.Context, request mcp.CallToolRequest, clie
 
 	var formattedTasks []map[string]interface{}
 	for _, task := range tasks.Tasks {
-				state := task.State
+		state := task.State
 		if state == "" {
 			state = "unknown"
 		}
