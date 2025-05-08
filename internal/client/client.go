@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/bishopfox/sliver/client/assets"
@@ -45,16 +48,26 @@ func NewSliverClient(configPath string) (*SliverClient, error) {
 func loadConfig(configPath string) (*assets.ClientConfig, error) {
 	if configPath == "" {
 		// Use first config found if not specified
-		entires, err := os.ReadDir("~/.sliver-client/configs")
-		if err != nil 	{
-			return "Unable to find configurations automatically in ~/.sliver-client/configs", err
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user home directory: %v", err)
+		}
+		
+		configsDir := filepath.Join(homeDir, ".sliver-client/configs")
+		entries, err := os.ReadDir(configsDir)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find configurations automatically in %s: %v", configsDir, err)
 		}
 
-		for _, entry in := range entires {
-			if !entry.IsDir() { && strings.EqualFold(filepath.Ext(entry.Name()), ".cfg") {
-				configPath = filepath.Join("~/.sliver-client/configs", entry.Name()), nil
-				return
+		for _, entry := range entries {
+			if !entry.IsDir() && strings.EqualFold(filepath.Ext(entry.Name()), ".cfg") {
+				configPath = filepath.Join(configsDir, entry.Name())
+				break
 			}
+		}
+		
+		if configPath == "" {
+			return nil, fmt.Errorf("no configuration files found in %s", configsDir)
 		}
 	}
 
