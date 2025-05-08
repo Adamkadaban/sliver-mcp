@@ -48,7 +48,7 @@ func HandleGenerateImplant(ctx context.Context, request mcp.CallToolRequest, cli
 		for i, c2Config := range c2Configs {
 			if c2Map, ok := c2Config.(map[string]interface{}); ok {
 				c2 := &clientpb.ImplantC2{
-					Priority: uint32(i),
+					Priority: uint32(i), // #nosec G115 - priority index will always be small
 				}
 
 				if url, ok := c2Map["url"].(string); ok {
@@ -201,7 +201,7 @@ func HandleSaveImplantProfile(ctx context.Context, request mcp.CallToolRequest, 
 		for i, c2Config := range c2Configs {
 			if c2Map, ok := c2Config.(map[string]interface{}); ok {
 				c2 := &clientpb.ImplantC2{
-					Priority: uint32(i),
+					Priority: uint32(i), // #nosec G115 - priority index will always be small
 				}
 
 				if url, ok := c2Map["url"].(string); ok {
