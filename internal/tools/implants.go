@@ -10,19 +10,19 @@ import (
 
 func HandleGenerateImplant(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	arguments := request.Params.Arguments
-	
+
 	config, ok := arguments["config"].(map[string]interface{})
 	if !ok {
 		return nil, NewInvalidArgsError("config must be an object")
 	}
-	
+
 	os, _ := config["os"].(string)
 	arch, _ := config["arch"].(string)
 	format, _ := config["format"].(string)
 	c2, _ := config["c2"].(string)
-	
+
 	// TODO: Implement actual implant generation logic
-	
+
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			mcp.TextContent{
@@ -35,7 +35,7 @@ func HandleGenerateImplant(ctx context.Context, request mcp.CallToolRequest, cli
 
 func HandleListImplants(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	// TODO: Implement actual implant listing logic
-	
+
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			mcp.TextContent{
@@ -48,14 +48,14 @@ func HandleListImplants(ctx context.Context, request mcp.CallToolRequest, client
 
 func HandleRegenerateImplant(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	arguments := request.Params.Arguments
-	
+
 	implantID, ok := arguments["implantID"].(string)
 	if !ok {
 		return nil, NewInvalidArgsError("implantID must be a string")
 	}
-	
+
 	// TODO: Implement actual implant regeneration logic
-	
+
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{
 			mcp.TextContent{

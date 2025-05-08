@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,7 +51,7 @@ func loadConfig(configPath string) (*assets.ClientConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get user home directory: %v", err)
 		}
-		
+
 		configsDir := filepath.Join(homeDir, ".sliver-client/configs")
 		entries, err := os.ReadDir(configsDir)
 		if err != nil {
@@ -65,13 +64,13 @@ func loadConfig(configPath string) (*assets.ClientConfig, error) {
 				break
 			}
 		}
-		
+
 		if configPath == "" {
 			return nil, fmt.Errorf("no configuration files found in %s", configsDir)
 		}
 	}
 
-	data, err := ioutil.ReadFile(configPath)
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
