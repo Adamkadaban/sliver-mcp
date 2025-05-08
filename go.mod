@@ -1,6 +1,8 @@
 module github.com/adamkadaban/sliver-mcp
 
-go 1.19
+go 1.23
+
+toolchain go1.24.3
 
 require (
 	github.com/bishopfox/sliver v1.15.16
