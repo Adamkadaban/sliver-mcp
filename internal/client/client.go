@@ -215,6 +215,146 @@ func (c *SliverClient) ImplantProfiles(ctx context.Context) (*clientpb.ImplantPr
 	return profiles, nil
 }
 
+func (c *SliverClient) SaveImplantProfile(ctx context.Context, profile *clientpb.ImplantProfile) (*clientpb.ImplantProfile, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	savedProfile, err := c.RPCClient.SaveImplantProfile(ctx, profile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save implant profile: %v", err)
+	}
+
+	return savedProfile, nil
+}
+
+func (c *SliverClient) DeleteImplantProfile(ctx context.Context, profileID string) (*commonpb.Empty, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	empty, err := c.RPCClient.DeleteImplantProfile(ctx, &clientpb.DeleteReq{
+		Name: profileID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete implant profile: %v", err)
+	}
+
+	return empty, nil
+}
+
+func (c *SliverClient) ImplantBuilds(ctx context.Context) (*clientpb.ImplantBuilds, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	builds, err := c.RPCClient.ImplantBuilds(ctx, &commonpb.Empty{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get implant builds: %v", err)
+	}
+
+	return builds, nil
+}
+
+func (c *SliverClient) DeleteImplantBuild(ctx context.Context, buildID string) (*commonpb.Empty, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	empty, err := c.RPCClient.DeleteImplantBuild(ctx, &clientpb.DeleteReq{
+		Name: buildID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete implant build: %v", err)
+	}
+
+	return empty, nil
+}
+
+// Having protobuf compatibility issues atm
+
+/*
+func (c *SliverClient) GenerateStage(ctx context.Context, reqData *clientpb.GenerateStageReq) (*clientpb.Generate, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+	}
+
+	generate, err := c.RPCClient.GenerateStage(ctx, reqData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate stager: %v", err)
+	}
+
+	return generate, nil
+}
+*/
+
+func (c *SliverClient) RmBeacon(ctx context.Context, beaconID string) (*commonpb.Empty, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	empty, err := c.RPCClient.RmBeacon(ctx, &clientpb.Beacon{
+		ID: beaconID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove beacon: %v", err)
+	}
+
+	return empty, nil
+}
+
+func (c *SliverClient) GetBeaconTasks(ctx context.Context, beaconID string) (*clientpb.BeaconTasks, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	tasks, err := c.RPCClient.GetBeaconTasks(ctx, &clientpb.Beacon{
+		ID: beaconID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get beacon tasks: %v", err)
+	}
+
+	return tasks, nil
+}
+
+// protobuf compatibility issues
+/*
+func (c *SliverClient) CancelBeaconTask(ctx context.Context, beaconID, taskID string) (*clientpb.BeaconTask, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+	}
+
+	beaconTask := &clientpb.BeaconTask{
+		BeaconID: beaconID,
+		ID:       taskID,
+	}
+
+	cancelledTask, err := c.RPCClient.CancelBeaconTask(ctx, beaconTask)
+	if err != nil {
+		return nil, fmt.Errorf("failed to cancel beacon task: %v", err)
+	}
+
+	return cancelledTask, nil
+}
+*/
+
 func (c *SliverClient) StartMTLSListener(ctx context.Context, host string, port uint32) (interface{}, error) {
 	if ctx == nil {
 		var cancel context.CancelFunc

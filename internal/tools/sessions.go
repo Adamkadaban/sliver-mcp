@@ -10,7 +10,6 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// HandleListSessions : listSessions tool request
 func HandleListSessions(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	sessions, err := client.GetSessions(ctx)
 	if err != nil {
@@ -53,7 +52,6 @@ func HandleListSessions(ctx context.Context, request mcp.CallToolRequest, client
 	}, nil
 }
 
-// HandleKillSession : killSession tool request
 func HandleKillSession(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	arguments := request.Params.Arguments
 
@@ -82,7 +80,6 @@ func HandleKillSession(ctx context.Context, request mcp.CallToolRequest, client 
 	}, nil
 }
 
-// HandleListBeacons : listBeacons tool request
 func HandleListBeacons(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	beacons, err := client.GetBeacons(ctx)
 	if err != nil {
@@ -129,7 +126,6 @@ func HandleListBeacons(ctx context.Context, request mcp.CallToolRequest, client 
 	}, nil
 }
 
-// HandleGetBeacon : getBeacon tool request
 func HandleGetBeacon(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	arguments := request.Params.Arguments
 
@@ -180,7 +176,107 @@ func HandleGetBeacon(ctx context.Context, request mcp.CallToolRequest, client *c
 	}, nil
 }
 
-// HandleListJobs : listJobs tool request
+func HandleRemoveBeacon(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
+	arguments := request.Params.Arguments
+
+	beaconID, ok := arguments["beaconID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("beaconID must be a string")
+	}
+
+	_, err := client.RmBeacon(ctx, beaconID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.TextContent{
+				Type: "text",
+				Text: fmt.Sprintf("Successfully removed beacon with ID %s", beaconID),
+			},
+		},
+	}, nil
+}
+
+func HandleGetBeaconTasks(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
+	arguments := request.Params.Arguments
+
+	beaconID, ok := arguments["beaconID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("beaconID must be a string")
+	}
+
+	tasks, err := client.GetBeaconTasks(ctx, beaconID)
+	if err != nil {
+		return nil, err
+	}
+
+	var formattedTasks []map[string]interface{}
+	for _, task := range tasks.Tasks {
+				state := task.State
+		if state == "" {
+			state = "unknown"
+		}
+
+		formattedTasks = append(formattedTasks, map[string]interface{}{
+			"id":          task.ID,
+			"description": task.Description,
+			"state":       state,
+			"sentAt":      task.SentAt,
+			"completedAt": task.CompletedAt,
+			"createdAt":   task.CreatedAt,
+		})
+	}
+
+	result, err := json.Marshal(map[string]interface{}{
+		"beaconID": beaconID,
+		"tasks":    formattedTasks,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.TextContent{
+				Type: "text",
+				Text: string(result),
+			},
+		},
+	}, nil
+}
+
+// Not working in client yet
+func HandleCancelBeaconTask(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
+	arguments := request.Params.Arguments
+
+	beaconID, ok := arguments["beaconID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("beaconID must be a string")
+	}
+
+	taskID, ok := arguments["taskID"].(string)
+	if !ok {
+		return nil, NewInvalidArgsError("taskID must be a string")
+	}
+
+	// Not calling client.CancelBeaconTask due to implementation issues
+	// cancelledTask, err := client.CancelBeaconTask(ctx, beaconID, taskID)
+	// if err != nil {
+	//	return nil, err
+	// }
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.TextContent{
+				Type: "text",
+				Text: fmt.Sprintf("Cancel beacon task not yet fully implemented. Would cancel task %s for beacon %s", taskID, beaconID),
+			},
+		},
+	}, nil
+}
+
 func HandleListJobs(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	jobs, err := client.GetJobs(ctx)
 	if err != nil {
@@ -216,7 +312,6 @@ func HandleListJobs(ctx context.Context, request mcp.CallToolRequest, client *cl
 	}, nil
 }
 
-// HandleKillJob : killJob tool request
 func HandleKillJob(ctx context.Context, request mcp.CallToolRequest, client *client.SliverClient) (*mcp.CallToolResult, error) {
 	arguments := request.Params.Arguments
 
