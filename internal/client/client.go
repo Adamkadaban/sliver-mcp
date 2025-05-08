@@ -507,7 +507,7 @@ func (c *SliverClient) Execute(ctx context.Context, sessionID, command string) (
 	// Use absolute paths for the shells to avoid any path resolution issues
 	const bash = "/bin/bash"
 	const sh = "/bin/sh"
-	
+
 	// Try to execute with bash first (most common shell with most features)
 	execute, err := c.RPCClient.Execute(ctx, &sliverpb.ExecuteReq{
 		Request: &commonpb.Request{
