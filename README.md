@@ -1,5 +1,9 @@
 # Sliver MCP
 
+<p align="center">
+  <img src="./.github/docs/sliver-mcp.svg" width="300" />
+</p>
+
 A Model-Code-Plugin (MCP) for interacting with the [Sliver](https://github.com/bishopfox/sliver) C2 framework. This MCP allows Large Language Models to interact with Sliver's functionality through well-defined tools.
 
 The MCP implementation used for this project is [mark3labs/mcp-go](https://github.com/mark3labs/mcp-go)
