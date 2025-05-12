@@ -13,9 +13,11 @@ func main() {
 	flag.StringVar(&configPath, "config", "", "Path to the configuration file")
 	var transport string
 	flag.StringVar(&transport, "transport", "stdio", "Transport type (stdio or sse)")
+	var outputDir string
+	flag.StringVar(&outputDir, "output-dir", "implants", "Directory to save generated implants")
 	flag.Parse()
 
-	mcpServer := server.NewSliverMCPServer(configPath)
+	mcpServer := server.NewSliverMCPServer(configPath, outputDir)
 
 	if transport == "sse" {
 		sseServer := mcpgoserver.NewSSEServer(mcpServer, mcpgoserver.WithBaseURL("http://localhost:8080"))

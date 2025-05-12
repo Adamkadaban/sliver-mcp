@@ -36,7 +36,7 @@ go build -o sliver-mcp ./cmd/sliver-mcp
 Before using the MCP, you need to configure the Sliver client by providing a path to your Sliver configuration.
 
 ```bash
-./sliver-mcp --config /path/to/sliver/config.json
+./sliver-mcp --config /path/to/sliver/config.cfg
 ```
 
 By default, the MCP uses the standard input/output for communication. You can also use the SSE transport:

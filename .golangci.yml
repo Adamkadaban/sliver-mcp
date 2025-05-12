@@ -12,12 +12,17 @@ linters:
     - misspell
     - revive
     - unconvert
+    - gocritic
+    - predeclared
 
 linters-settings:
   errcheck:
     check-type-assertions: true
-  govet:
-    check-shadowing: true
+  # Use gocritic for shadow variable detection instead of the deprecated govet option
+  gocritic:
+    enabled-checks:
+      - builtinShadow
+      - importShadow
   revive:
     rules:
       - name: exported
